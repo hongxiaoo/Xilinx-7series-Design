@@ -16,3 +16,32 @@ module mux4x1 #(
   end
   
 endmodule
+
+module mux8x1 #( 
+  parameter DATA_WIDTH = 32
+) (
+  input  logic [DATA_WIDTH-1:0] din[8],
+  input  logic [2:0] sel,
+  output logic [DATA_WIDTH-1:0] dout
+);
+
+  logic [DATA_WIDTH-1:0] dout0;
+  logic [DATA_WIDTH-1:0] dout1;
+  
+  mux4x1 #(
+    .DATA_WIDTH(DATA_WIDTH)
+  ) mux0 (
+    .din (din[0:3]),
+    .sel (sel[1:0]),
+    .dout(dout0)
+  );
+  mux4x1 #(
+    .DATA_WIDTH(DATA_WIDTH)
+  ) mux1 (
+    .din (din[4:7]),
+    .sel (sel[1:0]),
+    .dout(dout1)
+  );
+  assign dout = sel[2] ? dout1 : dout0;
+  
+endmodule
