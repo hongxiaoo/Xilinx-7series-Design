@@ -35,3 +35,24 @@ module reset_sync #(
   assign sync_reset = sync_reg[SYNC_STAGE-1];
   
 endmodule
+// Resetn-Sync : Async-assert and sync-deassert
+// Min 3 stage pipeline to mitegate reset recovery and removal time
+module resetn_sync #(
+  parameter SYNC_STAGE = 3
+) (
+  input  logic clk,
+  input  logic async_resetn,
+  output logic sync_resetn
+);
+  
+  (* ASYNC_REG = "TRUE" *) logic [SYNC_STAGE-1:0] sync_reg;
+  always_ff @(posedge clk or negedge async_resetn) begin
+    if (!async_resetn) begin
+      sync_reg <= {SYNC_STAGE{1'b0}};
+    end else begin
+      sync_reg <= {sync_reg[SYNC_STAGE-2:0],1'b1};
+    end
+  end
+  assign sync_resetn = sync_reg[SYNC_STAGE-1];
+  
+endmodule
