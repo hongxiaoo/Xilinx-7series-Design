@@ -1,4 +1,6 @@
 // pipeline register using SRL32/SRL16 of SLICEM
+// dont use set/reset control set or ASYNC_REG to map to SRL32/16
+// use attribute for reg_srl / reg_srl_reg / srl_reg
 module pipeline_reg #(
   parameter SYNC_STAGE = 32
 ) (
@@ -16,6 +18,7 @@ module pipeline_reg #(
 endmodule
 // Reset-Sync : Async-assert and sync-deassert
 // Min 3 stage pipeline to mitegate reset recovery and removal time
+// use set_max_delay constraint for async_reset from source to FF/d with period min(clk1,clk2)
 module reset_sync #(
   parameter SYNC_STAGE = 3
 ) (
