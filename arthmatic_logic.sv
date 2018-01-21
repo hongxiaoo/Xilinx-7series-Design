@@ -1,3 +1,4 @@
+// 9-LUT6 
 module add_sub #(
   parameter DATA_WIDTH = 8
 ) (
@@ -15,6 +16,8 @@ module add_sub #(
 endmodule
 
 // 2-stage pipelined MULTIPLIER - uses 1-DSP48
+// 18 a,b 47 p for one DSP48 block
+// 36 a,b uses 4-DSP48 blocks ({a18,b18})*({c18,d18}) = {a*c,a*d,b*c,b*d}
 module int_mul #(
   parameter DATA_WIDTH = 8
 ) (
