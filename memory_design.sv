@@ -2,6 +2,7 @@
 // distributed RAM supports Sync-Write and Async-Read
 // block RAM only supports Sync-Write and Read
 // if the DATA_WIDTH > 16 bit use Block-RAM
+// if the ADDR_WIDTH > 8 (2^8=256) bit use Block-RAM
 module spram #(
   parameter RAM_STYLE = "distributed"
   parameter REG_RPORT = 1,  // Async-read supported only in distributed RAM
