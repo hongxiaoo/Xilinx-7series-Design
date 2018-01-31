@@ -40,6 +40,7 @@ module reset_sync #(
 endmodule
 // Resetn-Sync : Async-assert and sync-deassert
 // Min 3 stage pipeline to mitegate reset recovery and removal time
+// use set_max_delay constraint for async_reset from source to FF/d with period min(clk1,clk2)
 module resetn_sync #(
   parameter SYNC_STAGE = 3
 ) (
@@ -57,5 +58,23 @@ module resetn_sync #(
     end
   end
   assign sync_resetn = sync_reg[SYNC_STAGE-1];
+  
+endmodule
+// Data-Sync : synchronize single-bit data
+// Min 3 stage pipeline to mitegate metastability due to setup and hold time violations
+// use ASYNC_REG and max_delay[with min-period(freq1,freq2)] constraint with async-clock groups {clk1,clk2}
+module data_sync #(
+  parameter SYNC_STAGE = 3
+) (
+  input  logic clk,
+  input  logic din,
+  output logic dout
+);
+  
+  (* ASYNC_REG = "TRUE" *) logic [SYNC_STAGE-1:0] sync_reg;
+  always_ff @(posedge clk) begin
+    sync_reg <= {sync_reg[SYNC_STAGE-2:0],din};
+  end
+  assign dout = sync_reg[SYNC_STAGE-1];
   
 endmodule
