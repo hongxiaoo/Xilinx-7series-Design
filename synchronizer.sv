@@ -78,3 +78,41 @@ module data_sync #(
   assign dout = sync_reg[SYNC_STAGE-1];
   
 endmodule
+// Data-Sync-pulsegen : synchronize singl-pulse from source_clk to destination_clk
+module data_sync_pulsegen #(
+  parameter SYNC_STAGE = 3
+) (
+  input  logic aclk,
+  input  logic areset,
+  input  logic adin, // pulse
+  output logic aqualifier,
+  input  logic bclk,
+  output logic bdout,// pulse
+  output logic bqualifier
+);
+  
+  logic bqualifier_d;
+  // qualifier signal generation using T-FF
+  always_ff @(posedge aclk) begin
+    if (areset) begin
+      aqualifier <= 1'b0;
+    end else begin
+      aqualifier <= aqualifier ^ adin;
+    end
+  end
+  // synchronize qualifier from aclk to bclk
+  // 3-clock-cycle for a double-flop to get qualifier valid in bclk-domain
+  data_sync #(
+    .SYNC_STAGE (SYNC_STAGE)
+  ) data_sync_qualifier (
+    .clk  (bclk),
+    .din  (aqualifier),
+    .dout (bqualifier)
+  );
+  // pulse generation for each logic transition
+  always_ff @(posedge aclk) begin
+    bqualifier_d <= bqualifier;
+  end
+  assign bdout = bqualifier_d ^ bqualifier;
+  
+endmodule
