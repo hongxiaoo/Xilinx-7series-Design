@@ -14,7 +14,7 @@ module mmcm_drp_if #(
   input  logic                  s_valid,
   output logic                  s_ready,
   // MMCM_ADV/PLL_ADV drp-interface
-  output logic [15:0] dout,
+  input  logic [15:0] dout,
   input  logic        drdy,
   input  logic        locked,
   output logic        dwe,
@@ -25,7 +25,7 @@ module mmcm_drp_if #(
 );
   
   typedef enum logic [3:0] {
-    WAIT_LOCK,WAIT_SEN,ADDRESS,WAIT_A_DRDY,
+    INIT,WAIT_LOCK,WAIT_SEN,ADDRESS,WAIT_A_DRDY,
     BITMASK,BITSEL,WRITE,WAIT_DRDY
   } state_type;
   state_type state;
@@ -38,6 +38,15 @@ module mmcm_drp_if #(
       s_ready <= 1'b1;
     end else if (s_ready && s_valid) begin
       s_ready <= 1'b0;
+    end
+  end
+  // rom-address and rom-select
+  always_ff @(posedge clk) begin
+    if (s_ready && s_valid) begin
+      rom_sel <= s_baddr;
+      rom_addr <= {ADDR_WIDTH{1'b0}};
+    end else if (state == BITSEL) begin
+      rom_addr <= rom_addr + 1'b1;
     end
   end
   // den drp-interface logic 
@@ -60,17 +69,34 @@ module mmcm_drp_if #(
       dwe <= 1'b0;
     end
   end
+  // daddr drp-interface logic 
+  always_ff @(posedge clk) begin
+    if (state == ADDRESS) begin
+      daddr <= rom_data[38:32];
+    end
+  end
+  // din drp-interface logic 
+  always_ff @(posedge clk) begin
+    if (state == BITMASK) begin
+      din <= rom_data[31:16] & dout;
+    end else if (state == BITSEL) begin
+      din <= rom_data[15:0] | din;
+    end
+  end
   // state-machine description
   always_ff @(posedge clk) begin
     if (reset) begin
-      state <= WAIT_LOCK;
+      state <= INIT;
       config_count <= {ADDR_WIDTH{1'b0}};
       rst_mmcm <= 1'b1;
     end else begin
       case(state)
+        INIT : begin
+          state <= WAIT_LOCK;
+          rst_mmcm <= 1'b0;
+        end
         // wait for MMCM to assert locked
         WAIT_LOCK : begin
-          rst_mmcm <= 1'b0;
           if (locked) begin
             state <= WAIT_SEN;
           end
@@ -79,12 +105,11 @@ module mmcm_drp_if #(
           if (s_ready && s_valid) begin
             config_count <= s_count;
             state <= ADDRESS;
+            rst_mmcm <= 1'b1;
           end
         end
-        ADDRESS : begin
-          rst_mmcm <= 1'b1;
-          state <= WAIT_A_DRDY;
-        end
+        // reset MMCM throughout the reconfiguration
+        ADDRESS : state <= WAIT_A_DRDY;
         WAIT_A_DRDY : begin
           if (den && drdy) begin
             state <= BITMASK;
@@ -96,12 +121,13 @@ module mmcm_drp_if #(
         WAIT_DRDY : begin
           if (den && drdy && |config_count) begin
             state <= ADDRESS;
+            config_count <= config_count - 1'b1;
           end else if (den && drdy) begin
             state <= WAIT_LOCK;
           end
         end
         default : begin
-          state <= WAIT_LOCK;
+          state <= INIT;
           rst_mmcm <= 1'b1;
         end
       endcase
