@@ -123,7 +123,7 @@ module mmcm_drp_if #(
             state <= ADDRESS;
             config_count <= config_count - 1'b1;
           end else if (den && drdy) begin
-            state <= WAIT_LOCK;
+            state <= INIT;
           end
         end
         default : begin
