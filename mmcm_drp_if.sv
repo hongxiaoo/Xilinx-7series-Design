@@ -10,7 +10,7 @@ module mmcm_drp_if #(
   input  logic [38:0] rom_data,
   // user-interface
   input  logic [RSEL_WIDTH-1:0] s_baddr,
-  input  logic [ADDR_WIDTH-1:0] s_count.
+  input  logic [ADDR_WIDTH-1:0] s_count,
   input  logic                  s_valid,
   output logic                  s_ready,
   // MMCM_ADV/PLL_ADV drp-interface
