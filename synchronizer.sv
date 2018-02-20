@@ -78,6 +78,27 @@ module data_sync #(
   assign dout = sync_reg[SYNC_STAGE-1];
   
 endmodule
+// gray-code synchronizer using Data-Sync
+module gray_sync #(
+  parameter DATA_WIDTH = 4,
+  parameter SYNC_STAGE = 3
+) (
+  input  logic clk,
+  input  logic [DATA_WIDTH-1:0] din,
+  output logic [DATA_WIDTH-1:0] dout
+);
+  
+  generate for(genvar i=0; i<DATA_WIDTH; i++) begin : gen_sync
+    data_sync #(
+      .SYNC_STAGE (SYNC_STAGE)
+    ) data_sync (
+      .clk  (clk), 
+      .din  (din[i]),
+      .dout (dout[i])
+    );
+  end endgenerate
+  
+endmodule
 // Data-Sync-pulsegen : synchronize singl-pulse from source_clk to destination_clk
 module data_sync_pulsegen #(
   parameter SYNC_STAGE = 3
