@@ -1,4 +1,7 @@
 module power_on_reset_sequence #(
+  parameter int NO_INTERCNCT = 1,
+  parameter int NO_PERIFERAL = 1,
+  parameter int NO_PROCESSOR = 1,
   parameter int TIMER_VALUE = 128,
   parameter int ASYNC_STAGE = 5,
   parameter int SYNC_STAGE = 2
