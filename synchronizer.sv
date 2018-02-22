@@ -20,16 +20,27 @@ endmodule
 // Min 3 stage pipeline to mitegate reset recovery and removal time
 // use set_max_delay constraint for async_reset from source to FF/d with period min(clk1,clk2)
 module reset_sync #(
-  parameter SYNC_STAGE = 3
+  parameter ASYNC_STAGE = 5,
+  parameter SYNC_STAGE = 2
 ) (
   input  logic clk,
   input  logic async_reset,
   output logic sync_reset
 );
   
+  (* ASYNC_REG = "TRUE" *) logic [ASYNC_STAGE-1:0] async_reg;
   (* ASYNC_REG = "TRUE" *) logic [SYNC_STAGE-1:0] sync_reg;
+  // mitigate reset recovery and removal of the async-reset input
   always_ff @(posedge clk or posedge async_reset) begin
     if (async_reset) begin
+      async_reg <= {ASYNC_STAGE{1'b1}};
+    end else begin
+      async_reg <= {async_reg[ASYNC_STAGE-2:0],1'b0};
+    end
+  end
+  // mitigate CDC-synchronization of sync-reset output
+  always_ff @(posedge clk) begin
+    if (async_reg[ASYNC_STAGE-1]) begin
       sync_reg <= {SYNC_STAGE{1'b1}};
     end else begin
       sync_reg <= {sync_reg[SYNC_STAGE-2:0],1'b0};
@@ -42,16 +53,27 @@ endmodule
 // Min 3 stage pipeline to mitegate reset recovery and removal time
 // use set_max_delay constraint for async_reset from source to FF/d with period min(clk1,clk2)
 module resetn_sync #(
-  parameter SYNC_STAGE = 3
+  parameter ASYNC_STAGE = 5,
+  parameter SYNC_STAGE = 2
 ) (
   input  logic clk,
   input  logic async_resetn,
   output logic sync_resetn
 );
   
+  (* ASYNC_REG = "TRUE" *) logic [ASYNC_STAGE-1:0] async_reg;
   (* ASYNC_REG = "TRUE" *) logic [SYNC_STAGE-1:0] sync_reg;
+  // mitigate reset recovery and removal of the async-reset input
   always_ff @(posedge clk or negedge async_resetn) begin
     if (!async_resetn) begin
+      async_reg <= {ASYNC_STAGE{1'b0}};
+    end else begin
+      async_reg <= {async_reg[ASYNC_STAGE-2:0],1'b1};
+    end
+  end
+  // mitigate CDC-synchronization of sync-reset output
+  always_ff @(posedge clk) begin
+    if (!async_reg[ASYNC_STAGE-1]) begin
       sync_reg <= {SYNC_STAGE{1'b0}};
     end else begin
       sync_reg <= {sync_reg[SYNC_STAGE-2:0],1'b1};
