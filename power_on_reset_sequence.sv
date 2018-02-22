@@ -24,7 +24,7 @@ module power_on_reset_sequence #(
     .SYNC_STAGE(SYNC_STAGE)
   ) reset_sync (
     .clk(clk),
-    .async_reset(async_reset),
+    .async_reset(async_reset|(~pll_locked)),
     .sync_reset(sync_reset)
   );
   // interconnect reset register
